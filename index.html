@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Formatter</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Data Formatter" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <style>
+    /* ── Colour tokens (dark mode default) ───────────────── */
+    :root {
+      --bg:               #0f1117;
+      --bg-header:        #0d1018;
+      --bg-input:         #0a0d14;
+      --border:           #1e2535;
+      --text:             #e2e8f0;
+      --text-muted:       #64748b;
+      --text-code:        #94a3b8;
+      --text-placeholder: #2d3748;
+      --text-empty:       #2d3748;
+      --hover-row:        #1a2035;
+      --toggle-color:     #475569;
+      --btn-sec-bg:       #1e2535;
+      --btn-sec-color:    #94a3b8;
+      --btn-sec-hover-bg: #252f42;
+      --btn-sec-hover-color: #e2e8f0;
+      --badge-bg:         #1e2535;
+      --badge-color:      #64748b;
+      --badge-hl-bg:      #2d1d6e;
+      --badge-hl-color:   #a78bfa;
+      --children-border:  #1e2535;
+      --stats-bg:         #0a0d14;
+      --scrollbar:        #1e2535;
+      --scrollbar-hover:  #2d3748;
+      --error-bg:         #2d1818;
+      --error-border:     #7f1d1d;
+      --error-color:      #fca5a5;
+      --badge-xml-bg:     #1a2f1a;
+      --badge-xml-color:  #86efac;
+      --badge-json-bg:    #1a1f30;
+      --badge-json-color: #7dd3fc;
+      --badge-unk-bg:     #1e2535;
+      --badge-unk-color:  #475569;
+      /* syntax */
+      --c-tag:      #7dd3fc;
+      --c-attr:     #fbbf24;
+      --c-val:      #f87171;
+      --c-bracket:  #475569;
+      --c-str:      #86efac;
+      --c-num:      #fb923c;
+      --c-bool:     #a78bfa;
+      --c-null:     #64748b;
+      --c-comment:  #475569;
+      --c-text:     #94a3b8;
+    }
+
+    /* ── Light mode overrides ────────────────────────────── */
+    body.light {
+      --bg:               #f8fafc;
+      --bg-header:        #ffffff;
+      --bg-input:         #f1f5f9;
+      --border:           #e2e8f0;
+      --text:             #1e293b;
+      --text-muted:       #64748b;
+      --text-code:        #334155;
+      --text-placeholder: #cbd5e1;
+      --text-empty:       #cbd5e1;
+      --hover-row:        #e8edf5;
+      --toggle-color:     #94a3b8;
+      --btn-sec-bg:       #e2e8f0;
+      --btn-sec-color:    #475569;
+      --btn-sec-hover-bg: #cbd5e1;
+      --btn-sec-hover-color: #1e293b;
+      --badge-bg:         #e2e8f0;
+      --badge-color:      #64748b;
+      --badge-hl-bg:      #ede9fe;
+      --badge-hl-color:   #7c3aed;
+      --children-border:  #e2e8f0;
+      --stats-bg:         #f8fafc;
+      --scrollbar:        #cbd5e1;
+      --scrollbar-hover:  #94a3b8;
+      --error-bg:         #fef2f2;
+      --error-border:     #fca5a5;
+      --error-color:      #dc2626;
+      --badge-xml-bg:     #dcfce7;
+      --badge-xml-color:  #16a34a;
+      --badge-json-bg:    #dbeafe;
+      --badge-json-color: #2563eb;
+      --badge-unk-bg:     #e2e8f0;
+      --badge-unk-color:  #64748b;
+      /* syntax */
+      --c-tag:      #0369a1;
+      --c-attr:     #b45309;
+      --c-val:      #dc2626;
+      --c-bracket:  #94a3b8;
+      --c-str:      #16a34a;
+      --c-num:      #ea580c;
+      --c-bool:     #7c3aed;
+      --c-null:     #94a3b8;
+      --c-comment:  #94a3b8;
+      --c-text:     #475569;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-header);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #a78bfa;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    header .tag-icon { font-size: 20px; }
+
+    /* Theme toggle button */
+    #btnTheme {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-color);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: Arial, sans-serif;
+    }
+    #btnTheme:hover { background: var(--btn-sec-hover-bg); color: var(--btn-sec-hover-color); }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left panel */
+    .panel-input {
+      width: 40%;
+      min-width: 300px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .panel-header {
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-header);
+    }
+
+    .panel-header .actions { display: flex; gap: 8px; }
+
+    /* Input type badge */
+    .type-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .type-badge.xml     { background: var(--badge-xml-bg);  color: var(--badge-xml-color); }
+    .type-badge.json    { background: var(--badge-json-bg); color: var(--badge-json-color); }
+    .type-badge.unknown { background: var(--badge-unk-bg);  color: var(--badge-unk-color); }
+
+    textarea {
+      flex: 1;
+      min-height: 0;
+      background: var(--bg-input);
+      border: none;
+      color: var(--text-code);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    textarea::placeholder { color: var(--text-placeholder); }
+
+    .panel-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+      background: var(--bg-header);
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      transition: all 0.15s;
+      font-family: Arial, sans-serif;
+    }
+
+    .btn-primary { background: #7c3aed; color: #fff; }
+    .btn-primary:hover { background: #6d28d9; }
+    .btn-secondary { background: var(--btn-sec-bg); color: var(--btn-sec-color); }
+    .btn-secondary:hover { background: var(--btn-sec-hover-bg); color: var(--btn-sec-hover-color); }
+    .btn-sm { padding: 4px 10px; font-size: 11px; }
+
+    /* Right panel */
+    .panel-tree { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tree-controls { display: flex; gap: 6px; }
+
+    .tree-container {
+      flex: 1;
+      overflow: auto;
+      padding: 12px 8px;
+      background: var(--bg);
+      transition: background 0.2s;
+    }
+
+    /* ── Tree nodes ──────────────────────────────────────── */
+    .tree-node {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .node-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .node-row:hover { background: var(--hover-row); }
+
+    .toggle-btn {
+      width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--toggle-color); font-size: 10px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+
+    .toggle-btn.open { transform: rotate(90deg); }
+    .toggle-spacer   { width: 16px; flex-shrink: 0; }
+
+    /* XML syntax */
+    .tag-name   { color: var(--c-tag);     font-weight: 500; }
+    .attr-name  { color: var(--c-attr); }
+    .attr-value { color: var(--c-val); }
+    .tag-close  { color: var(--c-bracket); }
+
+    /* JSON syntax */
+    .json-key     { color: var(--c-tag); }
+    .json-str     { color: var(--c-str); }
+    .json-num     { color: var(--c-num); }
+    .json-bool    { color: var(--c-bool); }
+    .json-null    { color: var(--c-null); }
+    .json-bracket { color: var(--c-bracket); }
+    .json-index   { color: var(--c-null); font-style: italic; }
+
+    .node-count {
+      margin-left: 6px;
+      background: var(--badge-bg);
+      color: var(--badge-color);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-family: Arial, sans-serif;
+      flex-shrink: 0;
+    }
+
+    .node-count.highlight {
+      background: var(--badge-hl-bg);
+      color: var(--badge-hl-color);
+    }
+
+    .text-content {
+      color: var(--c-text);
+      font-style: italic;
+      padding: 1px 6px 2px 36px;
+      display: block;
+      font-size: 12px;
+    }
+
+    .node-children {
+      padding-left: 20px;
+      border-left: 1px solid var(--children-border);
+      margin-left: 14px;
+    }
+
+    .node-children.collapsed { display: none; }
+
+    /* Stats bar */
+    .stats-bar {
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--stats-bg);
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    /* Empty / error */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 8px;
+      color: var(--text-empty);
+      font-size: 14px;
+    }
+
+    .empty-state .icon { font-size: 40px; }
+
+    .error-banner {
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-color);
+      padding: 10px 16px;
+      margin: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    /* Resizer */
+    .resizer {
+      width: 4px;
+      background: var(--border);
+      cursor: col-resize;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+
+    .resizer:hover, .resizer.active { background: #7c3aed; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+
+    /* ── Tab bar ─────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      align-items: stretch;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+      padding: 0 8px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      min-height: 36px;
+    }
+    .tab-bar::-webkit-scrollbar { height: 3px; }
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 12px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      user-select: none;
+      transition: color 0.15s;
+      flex-shrink: 0;
+      max-width: 180px;
+    }
+    .tab-item:hover { color: var(--text); }
+    .tab-item.active { color: var(--text); border-bottom-color: #7c3aed; }
+
+    .tab-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tab-close-btn {
+      width: 15px; height: 15px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 3px;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    .tab-item:hover .tab-close-btn,
+    .tab-item.active .tab-close-btn { opacity: 1; }
+    .tab-close-btn:hover { background: var(--btn-sec-hover-bg); color: var(--text); }
+
+    .tab-add-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      padding: 0 10px;
+      cursor: pointer;
+      line-height: 1;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .tab-add-btn:hover { color: var(--text); background: var(--btn-sec-bg); }
+
+    /* ── Tile button on tree rows ────────────────────────── */
+    .tile-btn {
+      opacity: 0;
+      margin-left: 6px;
+      background: var(--badge-hl-bg);
+      color: var(--badge-hl-color);
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      padding: 1px 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: opacity 0.15s, background 0.15s;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+    .node-row:hover .tile-btn { opacity: 1; }
+    .tile-btn:hover { background: #7c3aed; color: #fff; }
+
+    /* ── Tile modal ──────────────────────────────────────── */
+    #tileModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #tileModal.open { display: flex; }
+
+    .modal-box {
+      background: var(--bg-header);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      min-width: 260px;
+      max-width: 92vw;
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      transition: width 0.2s ease;
+    }
+
+    .modal-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .modal-close {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-color);
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      padding: 2px 10px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+    }
+    .modal-close:hover { background: var(--btn-sec-hover-bg); color: var(--btn-sec-hover-color); }
+
+    .modal-back-btn {
+      background: var(--btn-sec-bg);
+      color: var(--btn-sec-color);
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+      flex-shrink: 0;
+    }
+    .modal-back-btn:hover { background: var(--btn-sec-hover-bg); color: var(--btn-sec-hover-color); }
+
+    .modal-body {
+      overflow: auto;
+      padding: 14px;
+      flex: 1;
+    }
+
+    /* ── Tile cards ──────────────────────────────────────── */
+    .tcards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .tcard {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .tcard:hover { border-color: #7c3aed55; }
+
+    .tcard-copy-btn {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      opacity: 0;
+      background: var(--btn-sec-bg);
+      color: var(--text-muted);
+      border: none;
+      border-radius: 4px;
+      font-size: 10px;
+      padding: 2px 5px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+      line-height: 1.4;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .tcard:hover .tcard-copy-btn { opacity: 1; }
+    .tcard-copy-btn:hover { background: var(--btn-sec-hover-bg); color: var(--text); }
+    .tcard-copy-btn.copied { color: #86efac !important; }
+
+    .tcard-header {
+      padding: 10px 12px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .tcard-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--c-tag);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tcard-count {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      background: var(--badge-hl-bg);
+      color: var(--badge-hl-color);
+      flex-shrink: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .tcard-attrs {
+      padding: 0 10px 8px;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+      overflow-x: auto;
+    }
+    .tcard-attrs::-webkit-scrollbar { height: 4px; }
+    .tcard-attrs::-webkit-scrollbar-track { background: transparent; }
+    .tcard-attrs::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+    .tcard-attrs::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+
+    .tcard-attr-chip {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-input);
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid var(--border);
+    }
+    .tcard-attr-name { color: var(--c-attr); }
+    .tcard-attr-val  { color: var(--c-val); }
+
+    .tcard-text {
+      padding: 4px 12px 10px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      word-break: break-word;
+    }
+
+    .tcard-expand-btn {
+      width: 100%;
+      padding: 6px 12px;
+      background: var(--bg-input);
+      border: none;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      text-align: left;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+    }
+    .tcard-expand-btn:hover { color: var(--text); }
+
+    .tcard-expand-arrow {
+      display: inline-block;
+      font-size: 9px;
+      transition: transform 0.15s;
+    }
+    .tcard-expand-btn.open .tcard-expand-arrow { transform: rotate(90deg); }
+
+    .tcard-children {
+      padding: 10px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-input);
+      display: none;
+    }
+    .tcard-children.open { display: block; }
+
+    .tcard-children .tcards-grid {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 6px;
+    }
+
+    .tcard-kv-list {
+      padding: 0 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .tcard-kv {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      min-width: 0;
+    }
+
+    .tcard-kv-key {
+      color: var(--c-attr);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tcard-kv-val {
+      color: var(--text);
+      padding-left: 8px;
+      white-space: nowrap;
+      overflow-x: auto;
+      font-size: 10.5px;
+      display: block;
+    }
+    .tcard-kv-val::-webkit-scrollbar { height: 3px; }
+    .tcard-kv-val::-webkit-scrollbar-track { background: transparent; }
+    .tcard-kv-val::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+    .tcard-kv-val::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+
+    /* ── Search bar ──────────────────────────────────────── */
+    .search-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-header);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s, background 0.2s, color 0.2s;
+    }
+    .search-input:focus { border-color: #7c3aed; }
+    .search-input::placeholder { color: var(--text-placeholder); }
+
+    .search-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      min-width: 72px;
+      text-align: right;
+    }
+    .search-count.has-matches { color: var(--badge-hl-color); }
+    .search-count.no-matches  { color: var(--error-color); }
+
+    /* Highlight matching rows */
+    .node-row.search-match {
+      background: rgba(124, 58, 237, 0.18);
+      outline: 1px solid rgba(124, 58, 237, 0.4);
+      border-radius: 4px;
+    }
+
+    /* Hide non-matching tree nodes during search */
+    .tree-node.search-hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Data Formatter</h1>
+    <button id="btnTheme" title="Toggle light/dark mode">🌙</button>
+  </header>
+
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-add-btn" id="btnAddTab" title="New tab">+</button>
+  </div>
+
+  <div class="main">
+    <!-- Input Panel -->
+    <div class="panel-input" id="panelInput">
+      <div class="panel-header">
+        <span>Input <span class="type-badge unknown" id="typeBadge">—</span></span>
+        <div class="actions">
+          <button class="btn-secondary btn-sm" id="btnSampleXml">XML Sample</button>
+          <button class="btn-secondary btn-sm" id="btnSampleJson">JSON Sample</button>
+          <button class="btn-secondary btn-sm" id="btnClear">Clear</button>
+        </div>
+      </div>
+      <textarea id="dataInput" placeholder="Paste XML or JSON here..."></textarea>
+      <div class="panel-footer">
+        <button class="btn-primary" id="btnParse">Format</button>
+        <span id="inputHint" style="font-size:12px;color:#475569;margin-left:4px;"></span>
+      </div>
+    </div>
+
+    <!-- Resizer -->
+    <div class="resizer" id="resizer"></div>
+
+    <!-- Tree Panel -->
+    <div class="panel-tree">
+      <div class="panel-header">
+        Tree View
+        <div class="tree-controls">
+          <button class="btn-secondary btn-sm" id="btnExpandAll">Expand All</button>
+          <button class="btn-secondary btn-sm" id="btnCollapseAll">Collapse All</button>
+        </div>
+      </div>
+
+      <div class="search-bar-row">
+        <span style="color:var(--text-muted);font-size:14px;flex-shrink:0;line-height:1">🔍</span>
+        <input type="text" class="search-input" id="treeSearch" placeholder="Search node names or values…" />
+        <span class="search-count" id="searchCount"></span>
+        <button class="btn-secondary btn-sm" id="btnClearSearch" style="display:none;padding:4px 8px;line-height:1">✕</button>
+      </div>
+
+      <div class="tree-container" id="treeContainer">
+        <div class="empty-state">
+          <div class="icon">&#x1F9E9;</div>
+          <div>Paste XML or JSON and click <strong style="color:#7c3aed">Format</strong></div>
+        </div>
+      </div>
+
+      <div class="stats-bar" id="statsBar" style="display:none">
+        <span id="statSummary"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tile Modal -->
+  <div id="tileModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <button class="modal-back-btn" id="modalBackBtn" style="display:none" title="Go back">← Back</button>
+        <span class="modal-title" id="modalTitle"></span>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const dataInput    = document.getElementById('dataInput');
+    const treeContainer= document.getElementById('treeContainer');
+    const statsBar     = document.getElementById('statsBar');
+    const statSummary  = document.getElementById('statSummary');
+    const typeBadge    = document.getElementById('typeBadge');
+    const btnParse     = document.getElementById('btnParse');
+    const btnClear     = document.getElementById('btnClear');
+    const btnSampleXml = document.getElementById('btnSampleXml');
+    const btnSampleJson= document.getElementById('btnSampleJson');
+    const btnExpandAll = document.getElementById('btnExpandAll');
+    const btnCollapseAll=document.getElementById('btnCollapseAll');
+    const inputHint    = document.getElementById('inputHint');
+
+    // ── Tab system ────────────────────────────────────────────────────────────
+    const tabBar    = document.getElementById('tabBar');
+    const btnAddTab = document.getElementById('btnAddTab');
+    let tabCounter  = 1;
+    let activeTabId = 1;
+    const tabsData  = new Map();
+
+    function createTabEl(tab) {
+      const el = document.createElement('div');
+      el.className = 'tab-item' + (tab.id === activeTabId ? ' active' : '');
+      el.setAttribute('data-tab-id', tab.id);
+      const lbl = document.createElement('span');
+      lbl.className = 'tab-label';
+      lbl.textContent = tab.label;
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'tab-close-btn';
+      closeBtn.innerHTML = '×';
+      closeBtn.title = 'Close tab';
+      closeBtn.addEventListener('click', e => { e.stopPropagation(); closeTab(tab.id); });
+      el.appendChild(lbl);
+      el.appendChild(closeBtn);
+      el.addEventListener('click', () => switchTab(tab.id));
+      return el;
+    }
+
+    function renderTabBar() {
+      tabBar.querySelectorAll('.tab-item').forEach(el => el.remove());
+      tabsData.forEach(tab => tabBar.insertBefore(createTabEl(tab), btnAddTab));
+      const closeBtns = tabBar.querySelectorAll('.tab-close-btn');
+      closeBtns.forEach(btn => { btn.style.display = tabsData.size <= 1 ? 'none' : ''; });
+    }
+
+    function saveCurrentTabState() {
+      const tab = tabsData.get(activeTabId);
+      if (!tab) return;
+      tab.input       = dataInput.value;
+      tab.badgeLabel  = typeBadge.textContent;
+      tab.badgeClass  = typeBadge.className.replace('type-badge', '').trim();
+      tab.inputHint   = inputHint.textContent;
+      tab.statsHtml   = statSummary.innerHTML;
+      tab.statsVisible= statsBar.style.display !== 'none';
+      tab.treeContent.innerHTML = '';
+      while (treeContainer.firstChild) tab.treeContent.appendChild(treeContainer.firstChild);
+    }
+
+    function restoreTabState(tabId) {
+      const tab = tabsData.get(tabId);
+      if (!tab) return;
+      dataInput.value         = tab.input;
+      typeBadge.textContent   = tab.badgeLabel;
+      typeBadge.className     = 'type-badge ' + tab.badgeClass;
+      inputHint.textContent   = tab.inputHint;
+      statSummary.innerHTML   = tab.statsHtml;
+      statsBar.style.display  = tab.statsVisible ? 'flex' : 'none';
+      treeContainer.innerHTML = '';
+      while (tab.treeContent.firstChild) treeContainer.appendChild(tab.treeContent.firstChild);
+      if (!treeContainer.firstChild) showEmpty();
+    }
+
+    function switchTab(newTabId) {
+      if (newTabId === activeTabId) return;
+      clearSearch();
+      closeTileModal();
+      saveCurrentTabState();
+      activeTabId = newTabId;
+      restoreTabState(newTabId);
+      tabBar.querySelectorAll('.tab-item').forEach(el => {
+        el.classList.toggle('active', +el.getAttribute('data-tab-id') === newTabId);
+      });
+    }
+
+    function addTab() {
+      clearSearch();
+      closeTileModal();
+      saveCurrentTabState();
+      tabCounter++;
+      const holder  = document.createElement('div');
+      const emptyEl = document.createElement('div');
+      emptyEl.className = 'empty-state';
+      emptyEl.innerHTML = `<div class="icon">&#x1F9E9;</div><div>Paste XML or JSON and click <strong style="color:#7c3aed">Format</strong></div>`;
+      holder.appendChild(emptyEl);
+      const newTab = {
+        id: tabCounter, label: 'Tab ' + tabCounter,
+        input: '', badgeLabel: '—', badgeClass: 'unknown',
+        treeContent: holder, statsHtml: '', statsVisible: false, inputHint: ''
+      };
+      tabsData.set(tabCounter, newTab);
+      activeTabId = tabCounter;
+      renderTabBar();
+      restoreTabState(tabCounter);
+    }
+
+    function closeTab(tabId) {
+      if (tabsData.size <= 1) return;
+      if (tabId === activeTabId) {
+        const ids   = [...tabsData.keys()];
+        const idx   = ids.indexOf(tabId);
+        const nextId= ids[idx + 1] ?? ids[idx - 1];
+        switchTab(nextId);
+      }
+      tabsData.delete(tabId);
+      renderTabBar();
+    }
+
+    function updateActiveTabLabel(label) {
+      const tab = tabsData.get(activeTabId);
+      if (!tab) return;
+      tab.label = label;
+      const el = tabBar.querySelector(`.tab-item[data-tab-id="${activeTabId}"] .tab-label`);
+      if (el) el.textContent = label;
+    }
+
+    function initTabs() {
+      const holder = document.createElement('div');
+      while (treeContainer.firstChild) holder.appendChild(treeContainer.firstChild);
+      tabsData.set(1, {
+        id: 1, label: 'Tab 1',
+        input: '', badgeLabel: '—', badgeClass: 'unknown',
+        treeContent: holder, statsHtml: '', statsVisible: false, inputHint: ''
+      });
+      renderTabBar();
+      restoreTabState(1);
+    }
+
+    btnAddTab.addEventListener('click', addTab);
+
+    // ── Theme toggle ─────────────────────────────────────────────────────────
+    const btnTheme = document.getElementById('btnTheme');
+    let isLight = false;
+
+    btnTheme.addEventListener('click', () => {
+      isLight = !isLight;
+      document.body.classList.toggle('light', isLight);
+      btnTheme.textContent = isLight ? '🌙' : '☀️';
+    });
+
+    // ── Auto-detect type as user types ───────────────────────────────────────
+    dataInput.addEventListener('input', () => {
+      const len = dataInput.value.length;
+      inputHint.textContent = len > 0 ? `${len.toLocaleString()} chars` : '';
+      updateTypeBadge(dataInput.value.trim());
+    });
+
+    function updateTypeBadge(raw) {
+      if (!raw) { setBadge('—', 'unknown'); return; }
+      if (raw.startsWith('<'))  { setBadge('XML',  'xml');  return; }
+      if (raw.startsWith('{') || raw.startsWith('[')) { setbadge('JSON', 'json'); return; }
+      setBadge('—', 'unknown');
+    }
+
+    function setBadge(label, cls) {
+      typeBadge.textContent = label;
+      typeBadge.className = 'type-badge ' + cls;
+    }
+
+    // ── Parse ─────────────────────────────────────────────────────────────────
+    btnParse.addEventListener('click', parse);
+    dataInput.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') parse();
+    });
+
+    function parse() {
+      const raw = dataInput.value.trim();
+      if (!raw) { showEmpty(); return; }
+
+      if (raw.startsWith('<')) {
+        parseXML(raw);
+      } else if (raw.startsWith('{') || raw.startsWith('[')) {
+        parseJSON(raw);
+      } else {
+        showError('Cannot detect format. Input must start with < for XML, or { / [ for JSON.');
+      }
+    }
+
+    // ── XML Parser ────────────────────────────────────────────────────────────
+    function parseXML(raw) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(raw, 'application/xml');
+      const parseError = doc.querySelector('parsererror');
+
+      if (parseError) {
+        showError(parseError.textContent.replace(/\n/g, ' ').trim());
+        return;
+      }
+
+      setBadge('XML', 'xml');
+
+      // Count tag occurrences for badges
+      const tagCounts = {};
+      let totalAttrs = 0;
+      doc.querySelectorAll('*').forEach(el => {
+        tagCounts[el.tagName] = (tagCounts[el.tagName] || 0) + 1;
+        totalAttrs += el.attributes.length;
+      });
+
+      let totalNodes = 0, maxDepth = 0;
+
+      function buildXmlNode(domNode, depth) {
+        if (depth > maxDepth) maxDepth = depth;
+
+        if (domNode.nodeType === Node.COMMENT_NODE) {
+          const wrap = document.createElement('div');
+          wrap.className = 'tree-node';
+          const row = document.createElement('div');
+          row.className = 'node-row';
+          row.style.paddingLeft = '22px';
+          row.innerHTML = `<span style="color:#475569;font-style:italic">&lt;!-- ${esc(domNode.nodeValue.trim())} --&gt;</span>`;
+          wrap.appendChild(row);
+          return wrap;
+        }
+
+        if (domNode.nodeType === Node.TEXT_NODE) {
+          const text = domNode.nodeValue.trim();
+          if (!text) return null;
+          const span = document.createElement('span');
+          span.className = 'text-content';
+          span.textContent = text.length > 120 ? text.slice(0, 120) + '…' : text;
+          return span;
+        }
+
+        if (domNode.nodeType !== Node.ELEMENT_NODE) return null;
+
+        totalNodes++;
+        const tagName = domNode.tagName;
+        const children = Array.from(domNode.childNodes).filter(c =>
+          c.nodeType === Node.ELEMENT_NODE ||
+          (c.nodeType === Node.TEXT_NODE && c.nodeValue.trim()) ||
+          c.nodeType === Node.COMMENT_NODE
+        );
+        const hasChildren = children.length > 0;
+
+        // Count siblings with the same tag name inside the immediate parent only
+        const siblingCount = domNode.parentNode
+          ? Array.from(domNode.parentNode.children).filter(c => c.tagName === tagName).length
+          : 1;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'tree-node';
+
+        const row = document.createElement('div');
+        row.className = 'node-row';
+
+        const toggle = document.createElement('span');
+        toggle.className = hasChildren ? 'toggle-btn open' : 'toggle-spacer';
+        if (hasChildren) toggle.innerHTML = '&#9654;';
+
+        let attrsHtml = '';
+        for (const a of domNode.attributes) {
+          attrsHtml += ` <span class="attr-name">${esc(a.name)}</span>=<span class="attr-value">"${esc(a.value)}"</span>`;
+        }
+
+        const tagEl = document.createElement('span');
+        tagEl.innerHTML = `<span class="tag-close">&lt;</span><span class="tag-name">${esc(tagName)}</span>${attrsHtml}<span class="tag-close">${hasChildren ? '>' : ' />'}</span>`;
+
+        const badge = document.createElement('span');
+        badge.className = 'node-count' + (siblingCount > 1 ? ' highlight' : '');
+        badge.textContent = siblingCount > 1 ? `×${siblingCount}` : '1';
+        badge.title = `"${tagName}" appears ${siblingCount} time${siblingCount !== 1 ? 's' : ''} inside its parent`;
+
+        row.appendChild(toggle);
+        row.appendChild(tagEl);
+        row.appendChild(badge);
+
+        if (domNode.children.length > 0) {
+          const tileBtn = document.createElement('button');
+          tileBtn.className = 'tile-btn';
+          tileBtn.textContent = '⊞';
+          tileBtn.title = 'View children as tiles';
+          tileBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            openTileModal(domNode, tagName, 'xml');
+          });
+          row.appendChild(tileBtn);
+        }
+
+        // Build searchable text: tag name + attr names/values + direct text nodes
+        { const sp = [tagName.toLowerCase()];
+          for (const a of domNode.attributes) sp.push(a.name.toLowerCase(), a.value.toLowerCase());
+          Array.from(domNode.childNodes)
+            .filter(c => c.nodeType === Node.TEXT_NODE && c.nodeValue.trim())
+            .forEach(c => sp.push(c.nodeValue.trim().toLowerCase()));
+          row.setAttribute('data-search', sp.join(' ')); }
+
+        wrap.appendChild(row);
+
+        if (hasChildren) {
+          const childWrap = document.createElement('div');
+          childWrap.className = 'node-children';
+          children.forEach(c => {
+            const el = buildXmlNode(c, depth + 1);
+            if (el) childWrap.appendChild(el);
+          });
+          wrap.appendChild(childWrap);
+          row.addEventListener('click', () => {
+            const col = childWrap.classList.toggle('collapsed');
+            toggle.classList.toggle('open', !col);
+          });
+        }
+
+        return wrap;
+      }
+
+      const frag = document.createDocumentFragment();
+      Array.from(doc.childNodes).forEach(c => {
+        const el = buildXmlNode(c, 0);
+        if (el) frag.appendChild(el);
+      });
+
+      treeContainer.innerHTML = '';
+      treeContainer.appendChild(frag);
+      clearSearch();
+      statsBar.style.display = 'flex';
+      statSummary.innerHTML = `Nodes: <strong style="color:#a78bfa">${totalNodes}</strong> &nbsp;|&nbsp; Unique tags: <strong style="color:#a78bfa">${Object.keys(tagCounts).length}</strong> &nbsp;|&nbsp; Max depth: <strong style="color:#a78bfa">${maxDepth}</strong> &nbsp;|&nbsp; Attributes: <strong style="color:#a78bfa">${totalAttrs}</strong>`;
+      updateActiveTabLabel(doc.documentElement?.tagName || 'XML');
+    }
+
+    // ── JSON Parser ───────────────────────────────────────────────────────────
+    function parseJSON(raw) {
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        showError(e.message);
+        return;
+      }
+
+      setBadge('JSON', 'json');
+
+      let totalNodes = 0, maxDepth = 0;
+
+      function buildJsonNode(value, keyLabel, depth) {
+        if (depth > maxDepth) maxDepth = depth;
+
+        const type = jsonType(value);
+        const isComplex = type === 'object' || type === 'array';
+
+        totalNodes++;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'tree-node';
+
+        const row = document.createElement('div');
+        row.className = 'node-row';
+
+        const toggle = document.createElement('span');
+        toggle.className = isComplex && Object.keys(value).length > 0 ? 'toggle-btn open' : 'toggle-spacer';
+        if (isComplex && Object.keys(value).length > 0) toggle.innerHTML = '&#9654;';
+
+        const label = document.createElement('span');
+
+        if (isComplex) {
+          const bracket = type === 'array' ? ['[', ']'] : ['{', '}'];
+          const size = Array.isArray(value) ? value.length : Object.keys(value).length;
+          label.innerHTML =
+            (keyLabel !== null ? `<span class="json-key">${esc(keyLabel)}</span><span class="tag-close">: </span>` : '') +
+            `<span class="json-bracket">${bracket[0]}</span>`;
+
+          const badge = document.createElement('span');
+          badge.className = 'node-count' + (size > 1 ? ' highlight' : '');
+          badge.textContent = size + (type === 'array' ? ' items' : ' keys');
+          badge.title = `${size} ${type === 'array' ? 'item' : 'key'}${size !== 1 ? 's' : ''}`;
+
+          row.appendChild(toggle);
+          row.appendChild(label);
+          row.appendChild(badge);
+
+          if (size > 0) {
+            const tileBtn = document.createElement('button');
+            tileBtn.className = 'tile-btn';
+            tileBtn.textContent = '⊞';
+            tileBtn.title = 'View children as tiles';
+            tileBtn.addEventListener('click', e => {
+              e.stopPropagation();
+              openTileModal(value, keyLabel || 'root', type);
+            });
+            row.appendChild(tileBtn);
+          }
+
+          wrap.appendChild(row);
+
+          if (size > 0) {
+            const childWrap = document.createElement('div');
+            childWrap.className = 'node-children';
+
+            const entries = Array.isArray(value)
+              ? value.map((v, i) => [i, v])
+              : Object.entries(value);
+
+            entries.forEach(([k, v]) => {
+              const child = buildJsonNode(v, Array.isArray(value) ? `[${k}]` : k, depth + 1);
+              if (child) childWrap.appendChild(child);
+            });
+
+            wrap.appendChild(childWrap);
+            row.addEventListener('click', () => {
+              const col = childWrap.classList.toggle('collapsed');
+              toggle.classList.toggle('open', !col);
+            });
+          }
+        } else {
+          // Primitive
+          const valHtml = jsonValueHtml(value, type);
+          label.innerHTML =
+            (keyLabel !== null ? `<span class="json-key">${esc(String(keyLabel))}</span><span class="tag-close">: </span>` : '') +
+            valHtml;
+
+          row.appendChild(toggle);
+          row.appendChild(label);
+          wrap.appendChild(row);
+        }
+
+        // Build searchable text: key name + (for primitives) value
+        { const sp = keyLabel !== null ? [String(keyLabel).toLowerCase()] : [];
+          if (!isComplex && value !== null && value !== undefined) sp.push(String(value).toLowerCase());
+          row.setAttribute('data-search', sp.join(' ')); }
+
+        return wrap;
+      }
+
+      const frag = document.createDocumentFragment();
+      frag.appendChild(buildJsonNode(data, null, 0));
+
+      treeContainer.innerHTML = '';
+      treeContainer.appendChild(frag);
+      clearSearch();
+      statsBar.style.display = 'flex';
+      const keys = typeof data === 'object' && data !== null ? (Array.isArray(data) ? data.length + ' items' : Object.keys(data).length + ' top-level keys') : '1 value';
+      statSummary.innerHTML = `Nodes: <strong style="color:#a78bfa">${totalNodes}</strong> &nbsp;|&nbsp; Max depth: <strong style="color:#a78bfa">${maxDepth}</strong> &nbsp;|&nbsp; Root: <strong style="color:#7dd3fc">${keys}</strong>`;
+      const rootKey = typeof data === 'object' && data !== null && !Array.isArray(data) ? Object.keys(data)[0] : null;
+      updateActiveTabLabel(rootKey ? rootKey : 'JSON');
+    }
+
+    function jsonType(val) {
+      if (val === null) return 'null';
+      if (Array.isArray(val)) return 'array';
+      return typeof val;
+    }
+
+    function jsonValueHtml(val, type) {
+      if (type === 'null')    return `<span class="json-null">null</span>`;
+      if (type === 'boolean') return `<span class="json-bool">${val}</span>`;
+      if (type === 'number')  return `<span class="json-num">${val}</span>`;
+      if (type === 'string') {
+        const display = val.length > 80 ? esc(val.slice(0, 80)) + '…' : esc(val);
+        return `<span class="json-str">"${display}"</span>`;
+      }
+      return esc(String(val));
+    }
+
+    // ── Expand / Collapse All ─────────────────────────────────────────────────
+    btnExpandAll.addEventListener('click', () => {
+      treeContainer.querySelectorAll('.node-children').forEach(el => el.classList.remove('collapsed'));
+      treeContainer.querySelectorAll('.toggle-btn').forEach(el => el.classList.add('open'));
+    });
+
+    btnCollapseAll.addEventListener('click', () => {
+      treeContainer.querySelectorAll('.node-children').forEach(el => el.classList.add('collapsed'));
+      treeContainer.querySelectorAll('.toggle-btn').forEach(el => el.classList.remove('open'));
+    });
+
+    // ── Clear ─────────────────────────────────────────────────────────────────
+    btnClear.addEventListener('click', () => {
+      dataInput.value = '';
+      inputHint.textContent = '';
+      setbadge('—', 'unknown');
+      showEmpty();
+    });
+
+    // ── Samples ───────────────────────────────────────────────────────────────
+    btnSampleXml.addEventListener('click', () => {
+      dataInput.value =
+`<?xml version="1.0" encoding="UTF-8"?>
+<library name="City Library" city="Springfield">
+  <!-- Fiction Section -->
+  <section type="fiction">
+    <book id="1" available="true">
+      <title>The Great Gatsby</title>
+      <author>F. Scott Fitzgerald</author>
+      <year>1925</year>
+      <genres>
+        <genre>Novel</genre>
+        <genre>Fiction</genre>
+      </genres>
+    </book>
+    <book id="2" available="false">
+      <title>1984</title>
+      <author>George Orwell</author>
+      <year>1949</year>
+      <genres>
+        <genre>Dystopian</genre>
+        <genre>Fiction</genre>
+      </genres>
+    </book>
+  </section>
+  <section type="non-fiction">
+    <book id="3" available="true">
+      <title>Sapiens</title>
+      <author>Yuval Noah Harari</author>
+      <year>2011</year>
+      <genres>
+        <genre>History</genre>
+        <genre>Non-Fiction</genre>
+      </genres>
+    </book>
+  </section>
+</library>`;
+      inputHint.textContent = `${dataInput.value.length.toLocaleString()} chars`;
+      setbadge('XML', 'xml');
+      parse();
+    });
+
+    btnSampleJson.addEventListener('click', () => {
+      dataInput.value = JSON.stringify({
+        library: {
+          name: "City Library",
+          city: "Springfield",
+          sections: [
+            {
+              type: "fiction",
+              books: [
+                { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", year: 1925, available: true,  genres: ["Novel", "Fiction"] },
+                { id: 2, title: "1984",             author: "George Orwell",        year: 1949, available: false, genres: ["Dystopian", "Fiction"] }
+              ]
+            },
+            {
+              type: "non-fiction",
+              books: [
+                { id: 3, title: "Sapiens", author: "Yuval Noah Harari", year: 2011, available: true, genres: ["History", "Non-Fiction"] }
+              ]
+            }
+          ],
+          totalBooks: 3,
+          isPublic: true,
+          metadata: null
+        }
+      }, null, 2);
+      inputHint.textContent = `${dataInput.value.length.toLocaleString()} chars`;
+      setbadge('JSON', 'json');
+      parse();
+    });
+
+    // ── Tile modal ────────────────────────────────────────────────────────────
+    const tileModal  = document.getElementById('tileModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody  = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+    const modalBackBtn = document.getElementById('modalBackBtn');
+
+    let modalHistory = [];
+    let modalCurrent = null;
+
+    modalClose.addEventListener('click', closeTileModal);
+    tileModal.addEventListener('click', e => { if (e.target === tileModal) closeTileModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTileModal(); });
+    modalBackBtn.addEventListener('click', () => {
+      if (modalHistory.length === 0) return;
+      modalCurrent = modalHistory.pop();
+      renderModal();
+    });
+
+    function closeTileModal() {
+      tileModal.classList.remove('open');
+      modalHistory = [];
+      modalCurrent = null;
+    }
+
+    function openTileModal(node, label, dataType) {
+      modalHistory = [];
+      modalCurrent = { node, label, dataType };
+      renderModal();
+      tileModal.classList.add('open');
+    }
+
+    function navigateModal(node, label, dataType) {
+      modalHistory.push(modalCurrent);
+      modalCurrent = { node, label, dataType };
+      renderModal();
+    }
+
+    function renderModal() {
+      const { node, label, dataType } = modalCurrent;
+      let childCount = 0;
+
+      if (dataType === 'xml') {
+        childCount = node.children.length;
+        modalTitle.innerHTML = `<span style="color:var(--c-bracket)">&lt;</span><span style="color:var(--c-tag)">${esc(label)}</span><span style="color:var(--c-bracket)">&gt;</span> &nbsp;<span style="color:var(--text-muted);font-size:12px;font-family:Arial">${childCount} child node${childCount !== 1 ? 's' : ''}</span>`;
+        modalBody.innerHTML = '';
+        modalBody.appendChild(buildXmlTileGrid(Array.from(node.children)));
+      } else {
+        const entries = Array.isArray(node) ? node : Object.entries(node);
+        childCount = Array.isArray(node) ? node.length : entries.length;
+        modalTitle.innerHTML = `<span style="color:var(--c-tag)">${esc(String(label))}</span> &nbsp;<span style="color:var(--text-muted);font-size:12px;font-family:Arial">${childCount} ${Array.isArray(node) ? 'item' : 'key'}${childCount !== 1 ? 's' : ''}</span>`;
+        modalBody.innerHTML = '';
+        modalBody.appendChild(buildJsonTileGrid(node));
+      }
+
+      const cols  = Math.min(Math.max(1, childCount), 5);
+      const ideal = cols * 210 + (cols - 1) * 10 + 60;
+      const maxW  = Math.floor(window.innerWidth * 0.92);
+      document.querySelector('.modal-box').style.width = Math.min(ideal, maxW) + 'px';
+
+      modalBackBtn.style.display = modalHistory.length > 0 ? '' : 'none';
+    }
+
+    // ── XML tile cards ────────────────────────────────────────────────────────
+    function buildXmlTileGrid(elements) {
+      const grid = document.createElement('div');
+      grid.className = 'tcards-grid';
+      elements.forEach(el => grid.appendChild(buildXmlTileCard(el)));
+      return grid;
+    }
+
+    function buildXmlTileCard(el) {
+      const card = document.createElement('div');
+      card.className = 'tcard';
+
+      // Header: tag + sibling count
+      const header = document.createElement('div');
+      header.className = 'tcard-header';
+      const tagEl = document.createElement('span');
+      tagEl.className = 'tcard-tag';
+      tagEl.textContent = `<${el.tagName}>`;
+      header.appendChild(tagEl);
+      if (el.parentNode) {
+        const sc = Array.from(el.parentNode.children).filter(c => c.tagName === el.tagName).length;
+        if (sc > 1) {
+          const cb = document.createElement('span');
+          cb.className = 'tcard-count';
+          cb.textContent = `×${sc}`;
+          header.appendChild(cb);
+        }
+      }
+      card.appendChild(header);
+
+      // Attributes
+      if (el.attributes.length > 0) {
+        const attrsEl = document.createElement('div');
+        attrsEl.className = 'tcard-attrs';
+        for (const a of el.attributes) {
+          const chip = document.createElement('span');
+          chip.className = 'tcard-attr-chip';
+          chip.innerHTML = `<span class="tcard-attr-name">${esc(a.name)}</span>=<span class="tcard-attr-val">"${esc(a.value)}"</span>`;
+          attrsEl.appendChild(chip);
+        }
+        card.appendChild(attrsEl);
+      }
+
+      // Text value (leaf nodes)
+      const txt = el.textContent.trim();
+      if (txt && el.children.length === 0) {
+        const textEl = document.createElement('div');
+        textEl.className = 'tcard-text';
+        textEl.textContent = txt.length > 60 ? txt.slice(0, 60) + '…' : txt;
+        card.appendChild(textEl);
+      }
+
+      // Children: inline key-value list if all are leaves, expand button otherwise
+      if (el.children.length > 0) {
+        const childElements = Array.from(el.children);
+        const allLeaves = childElements.every(c => c.children.length === 0);
+        if (allLeaves) {
+          const kvList = document.createElement('div');
+          kvList.className = 'tcard-kv-list';
+          childElements.forEach(child => {
+            const childTxt = child.textContent.trim();
+            const kv = document.createElement('div');
+            kv.className = 'tcard-kv';
+            const keyEl = document.createElement('span');
+            keyEl.className = 'tcard-kv-key';
+            keyEl.textContent = child.tagName;
+            keyEl.title = child.tagName;
+            kv.appendChild(keyEl);
+            // Show attributes of the leaf child
+            for (const a of child.attributes) {
+              const val = document.createElement('span');
+              val.className = 'tcard-kv-val';
+              val.innerHTML = `<span style="color:var(--c-attr)">${esc(a.name)}</span>=<span style="color:var(--c-val)">"${esc(a.value)}"</span>`;
+              val.title = `${a.name}="${a.value}"`;
+              kv.appendChild(val);
+            }
+            // Show text content of the leaf child
+            if (childTxt) {
+              const val = document.createElement('span');
+              val.className = 'tcard-kv-val';
+              val.textContent = childTxt;
+              val.title = childTxt;
+              kv.appendChild(val);
+            }
+            kvList.appendChild(kv);
+          });
+          card.appendChild(kvList);
+        } else {
+          const expandBtn = document.createElement('button');
+          expandBtn.className = 'tcard-expand-btn';
+          expandBtn.innerHTML = `<span class="tcard-expand-arrow">▶</span> ${el.children.length} child${el.children.length > 1 ? 'ren' : ''}`;
+          card.appendChild(expandBtn);
+          expandBtn.addEventListener('click', e => {
+            e.stopPropagation();
+            navigateModal(el, el.tagName, 'xml');
+          });
+        }
+      }
+
+      // Copy button — build copy value from visible content
+      let xmlCopyParts = [];
+      if (el.attributes.length > 0)
+        xmlCopyParts.push(Array.from(el.attributes).map(a => `${a.name}="${a.value}"`).join('\n'));
+      if (el.children.length === 0 && el.textContent.trim())
+        xmlCopyParts.push(el.textContent.trim());
+      else if (el.children.length > 0 && Array.from(el.children).every(c => c.children.length === 0))
+        xmlCopyParts.push(Array.from(el.children).map(c => {
+          const parts = Array.from(c.attributes).map(a => `${a.name}="${a.value}"`);
+          if (c.textContent.trim()) parts.push(c.textContent.trim());
+          return `${c.tagName}: ${parts.join(', ')}`;
+        }).join('\n'));
+      if (xmlCopyParts.length) card.appendChild(makeCopyBtn(xmlCopyParts.join('\n')));
+
+      return card;
+    }
+
+    // ── JSON tile cards ───────────────────────────────────────────────────────
+    function buildJsonTileGrid(value) {
+      const grid = document.createElement('div');
+      grid.className = 'tcards-grid';
+      const entries = Array.isArray(value) ? value.map((v, i) => [i, v]) : Object.entries(value);
+      entries.forEach(([k, v]) => grid.appendChild(buildJsonTileCard(k, v)));
+      return grid;
+    }
+
+    function buildJsonTileCard(key, value) {
+      const card = document.createElement('div');
+      card.className = 'tcard';
+      const type = jsonType(value);
+      const isComplex = type === 'object' || type === 'array';
+
+      const header = document.createElement('div');
+      header.className = 'tcard-header';
+      const keyEl = document.createElement('span');
+      keyEl.className = 'tcard-tag';
+      keyEl.textContent = String(key);
+      header.appendChild(keyEl);
+      if (isComplex) {
+        const size = Array.isArray(value) ? value.length : Object.keys(value).length;
+        const cb = document.createElement('span');
+        cb.className = 'tcard-count';
+        cb.textContent = type === 'array' ? `[${size}]` : `{${size}}`;
+        header.appendChild(cb);
+      }
+      card.appendChild(header);
+
+      if (!isComplex) {
+        const textEl = document.createElement('div');
+        textEl.className = 'tcard-text';
+        textEl.innerHTML = jsonValueHtml(value, type);
+        card.appendChild(textEl);
+      }
+
+      if (isComplex) {
+        const size = Array.isArray(value) ? value.length : Object.keys(value).length;
+        if (size > 0) {
+          const entries = Array.isArray(value) ? value.map((v, i) => [i, v]) : Object.entries(value);
+          const allLeaves = entries.every(([, v]) => { const t = jsonType(v); return t !== 'object' && t !== 'array'; });
+          if (allLeaves) {
+            const kvList = document.createElement('div');
+            kvList.className = 'tcard-kv-list';
+            entries.forEach(([k, v]) => {
+              const t = jsonType(v);
+              const kv = document.createElement('div');
+              kv.className = 'tcard-kv';
+              const keyEl = document.createElement('span');
+              keyEl.className = 'tcard-kv-key';
+              keyEl.textContent = String(k);
+              keyEl.title = String(k);
+              kv.appendChild(keyEl);
+              const val = document.createElement('span');
+              val.className = 'tcard-kv-val';
+              val.innerHTML = jsonValueHtml(v, t);
+              if (v !== null && v !== undefined) val.title = String(v);
+              kv.appendChild(val);
+              kvList.appendChild(kv);
+            });
+            card.appendChild(kvList);
+          } else {
+            const expandBtn = document.createElement('button');
+            expandBtn.className = 'tcard-expand-btn';
+            expandBtn.innerHTML = `<span class="tcard-expand-arrow">▶</span> ${size} ${type === 'array' ? 'item' : 'key'}${size !== 1 ? 's' : ''}`;
+            card.appendChild(expandBtn);
+            expandBtn.addEventListener('click', e => {
+              e.stopPropagation();
+              navigateModal(value, String(key), type);
+            });
+          }
+        }
+      }
+
+      // Copy button
+      let jsonCopyVal = '';
+      if (!isComplex) {
+        jsonCopyVal = value !== null && value !== undefined ? String(value) : '';
+      } else {
+        const size = Array.isArray(value) ? value.length : Object.keys(value).length;
+        if (size > 0) {
+          const entries = Array.isArray(value) ? value.map((v,i)=>[i,v]) : Object.entries(value);
+          const allLeaves = entries.every(([,v]) => { const t=jsonType(v); return t!=='object'&&t!=='array'; });
+          if (allLeaves) jsonCopyVal = entries.map(([k,v]) => `${k}: ${v}`).join('\n');
+        }
+      }
+      if (jsonCopyVal) card.appendChild(makeCopyBtn(jsonCopyVal));
+
+      return card;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function showEmpty() {
+      treeContainer.innerHTML = `<div class="empty-state">
+        <div class="icon">&#x1F9E9;</div>
+        <div>Paste XML or JSON and click <strong style="color:#7c3aed">Format</strong></div>
+      </div>`;
+      statsBar.style.display = 'none';
+    }
+
+    function showError(msg) {
+      treeContainer.innerHTML = `<div class="error-banner">&#x26A0; ${esc(msg)}</div>`;
+      statsBar.style.display = 'none';
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function makeCopyBtn(text) {
+      const btn = document.createElement('button');
+      btn.className = 'tcard-copy-btn';
+      btn.textContent = '⎘';
+      btn.title = 'Copy to clipboard';
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = '✓';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = '⎘'; btn.classList.remove('copied'); }, 1500);
+        });
+      });
+      return btn;
+    }
+
+    // Fix typo: unified badge setter
+    function setbadge(label, cls) {
+      typeBadge.textContent = label;
+      typeBadge.className = 'type-badge ' + cls;
+    }
+
+    // ── Tree Search ───────────────────────────────────────────────────────────
+    const treeSearch     = document.getElementById('treeSearch');
+    const searchCountEl  = document.getElementById('searchCount');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+    let searchTimer = null;
+
+    treeSearch.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => applySearch(treeSearch.value), 180);
+      btnClearSearch.style.display = treeSearch.value ? '' : 'none';
+    });
+
+    btnClearSearch.addEventListener('click', () => {
+      treeSearch.value = '';
+      btnClearSearch.style.display = 'none';
+      applySearch('');
+    });
+
+    function clearSearch() {
+      if (typeof treeSearch === 'undefined') return;
+      treeSearch.value = '';
+      btnClearSearch.style.display = 'none';
+      searchCountEl.textContent = '';
+      searchCountEl.className = 'search-count';
+    }
+
+    function applySearch(query) {
+      const q = query.trim().toLowerCase();
+
+      // Clear previous highlights and hidden state
+      treeContainer.querySelectorAll('.search-match').forEach(el => el.classList.remove('search-match'));
+      treeContainer.querySelectorAll('.search-hidden').forEach(el => el.classList.remove('search-hidden'));
+
+      if (!q) {
+        searchCountEl.textContent = '';
+        searchCountEl.className = 'search-count';
+        return;
+      }
+
+      // Initially hide every tree-node wrapper
+      treeContainer.querySelectorAll('.tree-node').forEach(el => el.classList.add('search-hidden'));
+
+      let matchCount = 0;
+
+      treeContainer.querySelectorAll('.node-row[data-search]').forEach(row => {
+        if (row.getAttribute('data-search').includes(q)) {
+          matchCount++;
+          row.classList.add('search-match');
+
+          // Walk up the DOM: unhide ancestor .tree-node wrappers and expand any
+          // collapsed .node-children along the way so the match is visible
+          let el = row.parentElement;
+          while (el && el !== treeContainer) {
+            if (el.classList.contains('tree-node')) {
+              el.classList.remove('search-hidden');
+            }
+            if (el.classList.contains('node-children') && el.classList.contains('collapsed')) {
+              el.classList.remove('collapsed');
+              const prevRow = el.previousElementSibling;
+              if (prevRow && prevRow.classList.contains('node-row')) {
+                const tb = prevRow.querySelector('.toggle-btn');
+                if (tb) tb.classList.add('open');
+              }
+            }
+            el = el.parentElement;
+          }
+        }
+      });
+
+      if (matchCount === 0) {
+        searchCountEl.textContent = 'No matches';
+        searchCountEl.className = 'search-count no-matches';
+      } else {
+        searchCountEl.textContent = `${matchCount} match${matchCount !== 1 ? 'es' : ''}`;
+        searchCountEl.className = 'search-count has-matches';
+      }
+    }
+
+    // ── Resizer ───────────────────────────────────────────────────────────────
+    const resizer   = document.getElementById('resizer');
+    const panelInput= document.getElementById('panelInput');
+    let isResizing = false, startX, startWidth;
+
+    resizer.addEventListener('mousedown', e => {
+      isResizing = true; startX = e.clientX; startWidth = panelInput.offsetWidth;
+      resizer.classList.add('active');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!isResizing) return;
+      const w = Math.max(200, Math.min(startWidth + e.clientX - startX, window.innerWidth - 300));
+      panelInput.style.width = w + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isResizing) return;
+      isResizing = false;
+      resizer.classList.remove('active');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    initTabs();
+
+    // ── PWA: Service Worker ───────────────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

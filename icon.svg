@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#0f1117"/>
+  <rect x="24" y="24" width="464" height="464" rx="60" fill="#1a1040"/>
+  <!-- Bracket decorations -->
+  <text x="48" y="200" font-family="monospace" font-size="160" fill="#2d1d6e" font-weight="bold">{</text>
+  <text x="360" y="400" font-family="monospace" font-size="160" fill="#2d1d6e" font-weight="bold">}</text>
+  <!-- DF monogram -->
+  <text x="256" y="310" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="#7c3aed" text-anchor="middle">DF</text>
+</svg>
